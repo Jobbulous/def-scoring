@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แบบให้คะแนนโครงการกองทุนดีอี</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: score sheet on the left, sticky tally on the right; stacks on phones with a bottom tally bar */
+:root {
+  --bg: #f3f5f2; --surface: #ffffff; --surface-2: #eaeee9; --ink: #1a231f; --muted: #57645e;
+  --line: #d6ddd6; --accent: #1d6656; --accent-soft: #dfeee8; --accent-ink: #ffffff;
+  --warn: #9a5b12; --warn-soft: #f7ead6; --bad: #a8352a; --bad-soft: #f7e2de; --ok: #2b7445; --ok-soft: #e2f1e6;
+  --f-display: "Bai Jamjuree", "IBM Plex Sans Thai", "Leelawadee UI", "Thonburi", sans-serif;
+  --f-body: "IBM Plex Sans Thai", "Leelawadee UI", "Thonburi", "Noto Sans Thai", sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111715; --surface: #18201d; --surface-2: #212b27; --ink: #e4ebe7; --muted: #9babA4;
+  --line: #2d3934; --accent: #5ec2a8; --accent-soft: #1b3a32; --accent-ink: #0b1411;
+  --warn: #e3a95e; --warn-soft: #382a16; --bad: #f08c7e; --bad-soft: #3c1f1b; --ok: #71c792; --ok-soft: #183323;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111715; --surface: #18201d; --surface-2: #212b27; --ink: #e4ebe7; --muted: #9babA4;
+  --line: #2d3934; --accent: #5ec2a8; --accent-soft: #1b3a32; --accent-ink: #0b1411;
+  --warn: #e3a95e; --warn-soft: #382a16; --bad: #f08c7e; --bad-soft: #3c1f1b; --ok: #71c792; --ok-soft: #183323;
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 96px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.3; }
+.num { font-family: var(--f-display); font-variant-numeric: tabular-nums; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+header.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+header.top h1 { font-size: 26px; font-weight: 700; letter-spacing: .01em; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; color: var(--muted); }
+.status { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
+
+.projbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 14px 0; }
+.projbar label.lbl { font-size: 13px; color: var(--muted); }
+select, input[type=text], input[type=number], textarea { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+#proj { min-width: 0; max-width: 100%; flex: 1 1 260px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 14px; font-weight: 500; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.chip.accent { background: var(--accent-soft); color: var(--accent); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.switch { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+
+.newproj { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: end; margin-bottom: 12px; }
+.newproj .field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.newproj .actions { display: flex; gap: 8px; }
+.banner { border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-bottom: 12px; background: var(--warn-soft); color: var(--warn); }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 18px; overflow-x: auto; }
+.tabs a { padding: 10px 14px; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; white-space: nowrap; }
+.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+@media (max-width: 920px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.side { margin-bottom: 30px; }
+.side-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 2px solid var(--ink); }
+.side-head h2 { font-size: 20px; font-weight: 700; }
+.side-head .q { font-size: 13px; color: var(--muted); }
+.topic { margin-top: 18px; }
+.topic-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 6px 0 10px; }
+.topic-head h3 { font-size: 16.5px; font-weight: 600; }
+.topic-head .score { white-space: nowrap; font-size: 15px; }
+.subs { display: grid; gap: 10px; }
+
+.sub { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; }
+.sub-head > div:first-child { min-width: 0; }
+.chip.wrap { white-space: normal; }
+.sub.done { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.sub-head { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; }
+.sub-title { font-weight: 600; font-size: 15.5px; }
+.sub-score { font-size: 18px; white-space: nowrap; }
+.sub-score .of { font-size: 13px; color: var(--muted); }
+details.crit { font-size: 13.5px; color: var(--muted); }
+details.crit summary { cursor: pointer; width: fit-content; }
+details.crit ul { margin: 6px 0; padding-left: 20px; }
+details.crit p { margin: 4px 0; }
+.levels { display: grid; gap: 6px; }
+.lv { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; background: var(--surface); }
+.lv:hover { border-color: var(--accent); }
+.lv input { position: absolute; opacity: 0; pointer-events: none; }
+.lv .pts { font-family: var(--f-display); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; text-align: center; border-radius: 6px; background: var(--surface-2); padding: 2px 0; }
+.lv .txt { font-size: 14px; }
+.lv.on { background: var(--accent-soft); border-color: var(--accent); }
+.lv.on .pts { background: var(--accent); color: var(--accent-ink); }
+.lv:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lv .tag { font-size: 11.5px; color: var(--muted); }
+.note-lines { font-size: 13px; color: var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 6px 10px; }
+.extra { display: grid; gap: 8px; }
+.pend-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 13.5px; }
+.pend-box { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto; background: var(--warn-soft); border-radius: 8px; padding: 10px; }
+.pend-box label { font-size: 12.5px; color: var(--warn); display: grid; gap: 2px; }
+.pend-box input, .pend-box select { background: var(--surface); }
+textarea { width: 100%; min-height: 40px; resize: vertical; font-size: 14px; }
+.clear { font-size: 12.5px; background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 0; }
+
+aside.tally { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 14px; }
+@media (max-width: 920px) { aside.tally { position: static; } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px; }
+.total { display: flex; align-items: baseline; gap: 8px; }
+.total .big { font-size: 44px; font-weight: 700; line-height: 1; }
+.total .of { color: var(--muted); }
+.bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; position: relative; }
+.bar i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 3px; }
+.bar b { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 3px; }
+.trow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; font-size: 13.5px; }
+.trow .n { font-variant-numeric: tabular-nums; font-family: var(--f-display); }
+.trow .bar { grid-column: 1 / -1; }
+.trow.sideline { font-weight: 600; font-size: 14px; margin-top: 4px; }
+.obs { display: grid; gap: 6px; font-size: 13.5px; margin: 0; padding: 0; list-style: none; }
+.obs li { display: flex; gap: 8px; align-items: flex-start; }
+.card h3 { font-size: 15px; font-weight: 600; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.bottombar { display: none; }
+@media (max-width: 920px) {
+  .bottombar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line);
+    padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; }
+  .bottombar .big { font-size: 22px; font-weight: 700; }
+}
+
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+table.cmp { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.cmp th, table.cmp td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table.cmp th:first-child, table.cmp td:first-child { text-align: left; white-space: normal; min-width: 200px; }
+table.cmp thead th { font-weight: 600; background: var(--surface-2); position: sticky; top: 0; }
+table.cmp td { font-variant-numeric: tabular-nums; }
+table.cmp tr.sidel td { font-weight: 600; background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+table.cmp tr.totl td { font-weight: 700; font-size: 15px; }
+table.cmp tr.flag td.spread { color: var(--warn); font-weight: 600; }
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); padding: 22px; color: var(--muted); }
+.legend { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+@media (prefers-reduced-motion: no-preference) { .lv, .btn { transition: border-color .12s, background .12s; } }
+
+.settings { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 14px 0 18px; }
+.settings label.lbl { font-size: 13px; color: var(--muted); }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--bad-soft); color: var(--bad); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 14px; }
+.btn.danger { background: var(--bad); border-color: var(--bad); color: var(--accent-ink); }
+</style>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">กองทุนพัฒนาดิจิทัลเพื่อเศรษฐกิจและสังคม · ม.26(1) / 26(2)</div>
+      <h1>แบบให้คะแนนโครงการ</h1>
+    </div>
+    <div class="status"><span class="dot ok"></span><span id="status-text">คะแนนบันทึกในเบราว์เซอร์นี้อัตโนมัติ</span></div>
+  </header>
+
+  <div class="settings">
+    <label class="lbl" for="kind">ประเภทข้อเสนอ</label>
+    <select id="kind"><option value="26(1)">ม.26(1) โครงการ/กิจกรรม</option><option value="26(2)">ม.26(2) วิจัยและพัฒนา</option></select>
+    <label class="switch" title="ข้อ ๒.๒ง เริ่มใช้ปีงบ 2570 เมื่อเปิด ข้อ ก ข ค จะกลับเป็นเต็ม 3 คะแนน">
+      <input type="checkbox" id="market"> ใช้ข้อ ๒.๒ง เทียบราคาตลาด (ปีงบ 2570)
+    </label>
+    <button class="btn" type="button" id="btn-reset">ล้างคะแนนทั้งหมด</button>
+  </div>
+  <div class="confirm" id="reset-confirm" hidden>
+    <span>ล้างคะแนน เหตุผล และรายการรอตรวจทั้งหมดในฟอร์มนี้? ย้อนกลับไม่ได้</span>
+    <button class="btn danger" type="button" id="reset-yes">ล้างเลย</button>
+    <button class="btn" type="button" id="reset-no">ยกเลิก</button>
+  </div>
+
+  <div class="grid">
+    <div id="form"></div>
+    <aside class="tally" id="tally"></aside>
+  </div>
+</div>
+
+<div class="bottombar" id="bottombar">
+  <div><span class="big num" id="bb-total">0</span> <span class="muted">/ 100</span></div>
+  <div class="muted small" id="bb-progress"></div>
+</div>
+
+<script type="application/json" id="criteria">[{"id":"1","label":"๑","name":"ความเหมาะสมและความเป็นไปได้ (Feasibility)","max":40,"q":"โครงการนี้ควรทำไหม และวางแผนมาดีพอจะทำได้จริงไหม","topics":[{"id":"1.1","label":"๑.๑","name":"ความสอดคล้องตามนโยบายรัฐบาล และความจำเป็นเร่งด่วน","max":15,"old":"ขั้นบันได 5 (ระบุแผน ได้ 1/3/5) + ดุลยพินิจ 10 · อ้างนโยบาย ความจำเป็น หรือโอกาส อย่างใดก็ได้","subs":[{"id":"1.1ก","letter":"ก","name":"ยุทธศาสตร์หลักที่ชัดเจน","isNew":false,"max":6.0,"plus":false,"consider":["เลือกยุทธศาสตร์หลัก 1 ด้าน จาก 6 มิติรัฐบาลดิจิทัล OECD / ยุทธศาสตร์กระทรวงดีอี ข้อ 1–6 / ภารกิจ สดช.","ยุทธศาสตร์รองได้ไม่เกิน 2 ด้าน","บอกตัวชี้วัดระดับยุทธศาสตร์ที่โครงการช่วยดัน และค่าที่คาดว่าเพิ่ม","อธิบายว่าผลงานโครงการส่งผลต่อตัวชี้วัดนั้นอย่างไร"],"full":"เลือก 1 ด้านชัด มีตัวชี้วัดเป็นตัวเลข และอธิบายเหตุผลการส่งผลได้","limit":"อ้างหลายยุทธศาสตร์กว้าง ๆ ได้ไม่เกินระดับ 1 · ไม่ระบุยุทธศาสตร์หลักได้ 0","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่ระบุยุทธศาสตร์หลัก"},{"v":2.0,"plus":false,"t":"ระบุยุทธศาสตร์หลัก 2 ด้าน"},{"v":4.0,"plus":false,"t":"มียุทธศาสตร์หลัก 2 ด้าน และบอกตัวชี้วัดระดับยุทธศาสตร์ที่โครงการสามารถผลักดัน และค่าตัวชี้วัดที่คาดว่าจะเพิ่มขึ้น"},{"v":6.0,"plus":false,"t":"มียุทธศาสตร์หลัก 2 ด้าน และบอกตัวชี้วัดระดับยุทธศาสตร์ที่โครงการสามารถผลักดัน และค่าตัวชี้วัดที่คาดว่าจะเพิ่มขึ้น และมีการอธิบายว่าผลงานโครงการส่งผลต่อตัวชี้วัดนั้นอย่างไร"}],"notes":[]},"ladder262":null},{"id":"1.1ข","letter":"ข","name":"สอดคล้องกรอบการให้ทุนและแผนชาติ","isNew":false,"max":2.0,"plus":false,"consider":["ตรงกับกรอบนโยบายการให้ทุน (1.3) แผนระดับชาติ (1.4.1) และแผนแม่บทเศรษฐกิจดิจิทัล (1.4.2)","ต้องชี้ประเด็นหรือเป้าหมายย่อยที่ตรงกัน ไม่ใช่แค่ชื่อแผน"],"full":"ชี้ประเด็นเจาะจงได้ครบทั้งสามแผน","limit":"เขียนแค่ชื่อแผน","ladder":{"levels":[{"v":0.0,"plus":false,"t":"มีแผน แต่ไม่ตรงกับกรอบนโยบายการให้ทุน หรือโครงการที่เสนอไม่ตรงตามยุทธศาสตร์ภายใต้แผน"},{"v":1.0,"plus":false,"t":"ตรงตามแผนและตรงตามกรอบนโยบายการให้ทุน"},{"v":2.0,"plus":false,"t":"ชี้ประเด็นเจาะจงได้ครบทั้งสามแผน ซึ่งตรงกับกรอบนโยบายกองทุน (1.3) แผนระดับชาติ (1.4.1) และแผนแม่บทเศรษฐกิจดิจิทัล (1.4.2) และต้องชี้ประเด็นหรือเป้าหมายย่อยที่ตรงกัน ไม่ใช่แค่ชื่อแผน"}],"notes":[]},"ladder262":null},{"id":"1.1ค","letter":"ค","name":"ความจำเป็นที่มีหลักฐาน","isNew":false,"max":4.0,"plus":false,"consider":["ตัวเลขสภาพปัญหาปัจจุบัน (ค่าฐาน) พร้อมแหล่งที่มา","ทำไมต้องทำตอนนี้ และถ้าไม่ทำจะเสียอะไร","ทำไมต้องใช้เงินกองทุน และไม่ซ้ำกับระบบรัฐที่มีอยู่"],"full":"ทั้ง 3 เรื่องมีข้อมูลและแหล่งอ้างอิงที่ตรวจสอบได้","limit":"บรรยายปัญหาโดยไม่มีตัวเลขหรือแหล่งอ้างอิง","ladder":{"levels":[{"v":0.0,"plus":false,"t":"บรรยายปัญหาโดยไม่มีตัวเลขหรือแหล่งอ้างอิง"},{"v":1.0,"plus":false,"t":"มีตัวเลขสภาพปัญหาปัจจุบัน (ค่าฐาน) พร้อมแหล่งที่มา"},{"v":2.0,"plus":false,"t":"มีเหตุผลความจำเป็นที่ต้องดำเนินการ ณ ปัจจุบัน และถ้าไม่ทำจะเกิดความเสียอย่างไร"},{"v":3.0,"plus":false,"t":"มีเหตุผลความจำเป็นที่ต้องขอรับการจัดสรรเงินจากกองทุน และระบบที่เสนอต้องไม่มีความซ้ำซ้อนกับระบบที่มีอยู่แล้ว"},{"v":4.0,"plus":false,"t":"มีตัวเลขสภาพปัญหาปัจจุบัน (ค่าฐาน) พร้อมแหล่งที่มา มีเหตุผลความจำเป็นที่ต้องดำเนินการ ณ ปัจจุบัน และถ้าไม่ทำจะเกิดความเสียอย่างไร และมีเหตุผลความจำเป็นที่ต้องขอรับการจัดสรรเงินจากกองทุน และระบบที่เสนอต้องไม่มีความซ้ำซ้อนกับระบบที่มีอยู่แล้ว โดยทั้ง 3 เรื่องมีข้อมูลและแหล่งอ้างอิงที่ตรวจสอบได้"}],"notes":[]},"ladder262":null},{"id":"1.1ง","letter":"ง","name":"สอดคล้องภายในและยึดผู้ใช้","isNew":false,"max":3.0,"plus":false,"consider":["หลักการ/เหตุผล (2.1) – วัตถุประสงค์ (2.2) – กลุ่มเป้าหมาย (2.3) ไปทางเดียวกัน","มีหลักฐานว่าผู้ใช้ต้องการจริง เช่น ผลสำรวจ สัมภาษณ์ หรือสถิติการใช้งาน"],"full":"ทั้งสามส่วนสอดคล้องกันและมีหลักฐานความต้องการของผู้ใช้","limit":"วัตถุประสงค์ไม่ตอบปัญหา หรือไม่ระบุกลุ่มเป้าหมาย","ladder":{"levels":[{"v":1.0,"plus":false,"t":"วัตถุประสงค์ไม่ตอบปัญหา หรือไม่ระบุกลุ่มเป้าหมาย"},{"v":2.0,"plus":false,"t":"มีหลักการ/เหตุผล (2.1) – วัตถุประสงค์ (2.2) – กลุ่มเป้าหมาย (2.3) ไปทางเดียวกัน"},{"v":3.0,"plus":false,"t":"มีหลักการ/เหตุผล (2.1) – วัตถุประสงค์ (2.2) – กลุ่มเป้าหมาย (2.3) ไปทางเดียวกัน และมีหลักฐานว่าผู้ใช้ต้องการจริง เช่น ผลสำรวจ สัมภาษณ์ หรือสถิติการใช้งาน โดยทั้งสามส่วนสอดคล้องกันและมีหลักฐานความต้องการของผู้ใช้"}],"notes":[]},"ladder262":null}]},{"id":"1.2","label":"๑.๒","name":"รายละเอียดของโครงการมีความชัดเจน และสอดคล้องเป็นรูปธรรม","max":10,"old":"ขั้นบันได 4 (ตรวจว่ามีข้อที่เกี่ยวข้อง) + ดุลยพินิจ 6","subs":[{"id":"1.2ก","letter":"ก","name":"ตรรกะของโครงการ (Logframe)","isNew":false,"max":4.0,"plus":false,"consider":["ห่วงโซ่ วัตถุประสงค์ → กิจกรรม → ผลผลิต → ผลลัพธ์ ต่อกันเป็นลำดับ","บอกเงื่อนไขที่ต้องเป็นจริงจึงจะได้ผล","วิจัย: คำถามวิจัย สมมติฐาน ทฤษฎี และกรอบการวิจัย สอดคล้องกัน"],"full":"ห่วงโซ่ครบทุกขั้นและเชื่อมกันชัด","limit":"กิจกรรมหรือผลผลิตไม่เกี่ยวกับวัตถุประสงค์","ladder":{"levels":[{"v":0.0,"plus":false,"t":"กิจกรรมหรือผลผลิตไม่เกี่ยวกับวัตถุประสงค์"},{"v":1.0,"plus":false,"t":"ห่วงโซ่ วัตถุประสงค์ → กิจกรรม → ผลผลิต → ผลลัพธ์ ต่อกันไม่เป็นลำดับ"},{"v":2.0,"plus":false,"t":"ห่วงโซ่ วัตถุประสงค์ → กิจกรรม → ผลผลิต → ผลลัพธ์ ต่อกันเป็นลำดับ"},{"v":3.0,"plus":false,"t":"ห่วงโซ่ วัตถุประสงค์ → กิจกรรม → ผลผลิต → ผลลัพธ์ ต่อกันเป็นลำดับ และเชื่อมโยงกันไม่ชัดเจน"},{"v":4.0,"plus":false,"t":"ห่วงโซ่ วัตถุประสงค์ → กิจกรรม → ผลผลิต → ผลลัพธ์ ต่อกันเป็นลำดับ และเชื่อมโยงกันชัดเจน"}],"notes":[]},"ladder262":{"levels":[{"v":0.0,"plus":false,"t":"กรอบการวิจัยไม่เกี่ยวกับวัตถุประสงค์"},{"v":1.0,"plus":false,"t":"มีคำถามวิจัย"},{"v":2.0,"plus":false,"t":"มีคำถามวิจัย และสมมติฐาน"},{"v":3.0,"plus":false,"t":"คำถามวิจัย สมมติฐาน และทฤษฎี"},{"v":4.0,"plus":false,"t":"คำถามวิจัย สมมติฐาน ทฤษฎี และกรอบการวิจัย สอดคล้องกัน"}],"notes":[]}},{"id":"1.2ข","letter":"ข","name":"ตัวชี้วัดแบบ SMART","isNew":false,"max":3.0,"plus":false,"consider":["ตัวชี้วัดเจาะจง วัดได้ ทำได้จริง เกี่ยวข้อง และมีกำหนดเวลา","มีค่าตั้งต้น ค่าเป้าหมาย วิธีวัด และแหล่งข้อมูลยืนยัน"],"full":"ทุกตัวชี้วัดเป็น SMART และมีค่าตั้งต้นพร้อมวิธีวัด","limit":"วัดแค่ว่าทำกิจกรรมแล้ว เช่น \"จัดประชุม 3 ครั้ง\"","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีตัวชี้วัดผลผลิต/ผลลัพธ์ เฉพาะเจาะจง วัดได้ ทำได้จริง และไม่มีกรอบระยะเวลา ไม่สามารถบรรลุวัตถุประสงค์ของโครงการ"},{"v":1.0,"plus":false,"t":"ตัวชี้วัดผลผลิต/ผลลัพธ์ เฉพาะเจาะจง วัดได้ ทำได้จริง มีกรอบระยะเวลา บรรลุวัตถุประสงค์ของโครงการ"},{"v":2.0,"plus":false,"t":"ตัวชี้วัดผลผลิต/ผลลัพธ์ เฉพาะเจาะจง วัดได้ ทำได้จริง มีกรอบระยะเวลา บรรลุวัตถุประสงค์ของโครงการ และมีค่าฐาน ค่าเป้าหมาย วิธีการวัด"},{"v":3.0,"plus":false,"t":"ตัวชี้วัดผลผลิต/ผลลัพธ์ เฉพาะเจาะจง วัดได้ ทำได้จริง มีกรอบระยะเวลา บรรลุวัตถุประสงค์ของโครงการ และมีค่าฐาน ค่าเป้าหมาย วิธีการวัด และแหล่งข้อมูลยืนยัน"}],"notes":[]},"ladder262":null},{"id":"1.2ค","letter":"ค","name":"กลุ่มเป้าหมาย","isNew":false,"max":2.0,"plus":false,"consider":["ใคร จำนวนเท่าไร ลักษณะแบบไหน อยู่พื้นที่ไหน","ตรงกับผลผลิตและผลลัพธ์"],"full":"ระบุครบและตรงกับผลที่คาดไว้","limit":"เขียนกว้าง ๆ เช่น \"ประชาชนทั่วไป\"","ladder":{"levels":[{"v":1.0,"plus":false,"t":"มีการระบุกลุ่มเป้าหมาย/ผู้มีส่วนได้ส่วนเสีย (2.3) พร้อมจำนวนคุณลักษณะ และพื้นที่ แต่ไม่สอดคล้องกับผลผลิต (3.1) และผลลัพธ์ (3.2)"},{"v":2.0,"plus":false,"t":"มีการระบุกลุ่มเป้าหมาย/ผู้มีส่วนได้ส่วนเสีย (2.3) พร้อมจำนวนคุณลักษณะ และพื้นที่ ที่สอดคล้องกับผลผลิต (3.1) และผลลัพธ์ (3.2)"}],"notes":[]},"ladder262":null},{"id":"1.2ง","letter":"ง","name":"สิ่งส่งมอบเป็นรูปธรรม","isNew":false,"max":1.0,"plus":false,"consider":["สิ่งส่งมอบแต่ละชิ้นมีเกณฑ์ตรวจรับ คือรู้ได้ว่าผ่านหรือไม่ผ่าน"],"full":"ทุกชิ้นมีเกณฑ์ตรวจรับชัด","limit":"\"รายงาน 1 ฉบับ\" โดยไม่บอกเนื้อหา\n ส่งมอบระบบ ชื่ออะไร","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีสิ่งส่งมอบแต่ละรายการ และไม่มีเกณฑ์การตรวจรับที่ตรวจสอบได้"},{"v":0.5,"plus":false,"t":"มีสิ่งส่งมอบครบทุกรายการ"},{"v":1.0,"plus":false,"t":"มีสิ่งส่งมอบครบทุกรายการ และมีเกณฑ์การตรวจรับที่ตรวจสอบได้"}],"notes":[]},"ladder262":null}]},{"id":"1.3","label":"๑.๓","name":"หัวหน้าโครงการ ผู้ร่วมงานหลัก ผู้ประสานงานโครงการ มีความเหมาะสมและพร้อม","max":5,"old":"ขั้นบันได 5 ทั้งหมด · นับจำนวนคน (\"อย่างน้อย 2 คน\", \"เกินกึ่งหนึ่ง\") · ไม่มีดุลยพินิจ","subs":[{"id":"1.3ก","letter":"ก","name":"ผู้ขอทุนและหัวหน้าโครงการ","isNew":false,"max":2.0,"plus":false,"consider":["เกี่ยวข้องโดยตรงกับงาน","มีผลงานใกล้เคียงย้อนหลัง 3–5 ปี พร้อมหลักฐาน"],"full":"เกี่ยวข้องโดยตรงและมีผลงานที่ตรวจสอบได้","limit":"อ้างประสบการณ์โดยไม่มีหลักฐาน","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ประเภทผู้ขอรับทุนและหัวหน้าโครงการไม่เกี่ยวข้องโดยตรง"},{"v":1.0,"plus":false,"t":"ประเภทผู้ขอรับทุนและหัวหน้าโครงการเกี่ยวข้องโดยตรง"},{"v":2.0,"plus":false,"t":"ประเภทผู้ขอรับทุนและหัวหน้าโครงการเกี่ยวข้องโดยตรงและมีผลงานใกล้เคียงที่ตรวจสอบได้ย้อนหลัง 3–5 ปี พร้อมหลักฐาน"}],"notes":[]},"ladder262":null},{"id":"1.3ข","letter":"ข","name":"ผู้ร่วมงานหลัก","isNew":false,"max":2.0,"plus":false,"consider":["งานหลักทุกงานมีคนที่มีคุณสมบัติตรงรับผิดชอบ","รวมทักษะเฉพาะ เช่น ข้อมูล ไซเบอร์ UX/UI การประเมินผลกระทบ"],"full":"ทุกงานหลักมีคนเหมาะสม","limit":"มีงานหลักที่ไม่มีใครมีคุณสมบัติรับผิดชอบ","ladder":{"levels":[{"v":1.0,"plus":false,"t":"ผู้ร่วมงานหลักมีคุณสมบัติที่ตรงกับงานที่ดำเนินงาน"},{"v":2.0,"plus":false,"t":"ผู้ร่วมงานหลักมีคุณสมบัติและทักษะเฉพาะที่ตรงกับงานที่ดำเนินงาน"}],"notes":[]},"ladder262":null},{"id":"1.3ค","letter":"ค","name":"บทบาทและสัดส่วนเวลา","isNew":false,"max":1.0,"plus":false,"consider":["แต่ละคนทำอะไร และทุ่มเวลาเท่าไร (คน-เดือน หรือ %)","ไม่รับงานหลายโครงการจนเกินกำลัง"],"full":"ระบุครบทุกคนพร้อมสัดส่วนเวลา","limit":"มีแค่รายชื่อ","ladder":{"levels":[{"v":0.0,"plus":false,"t":"มีการระบุรายชื่อ"},{"v":1.0,"plus":false,"t":"มีการระบุขอบเขตและหน้าที่ รวมถึงระยะเวลาที่ดำเนินการของบุคลากรแต่ละคน"}],"notes":[]},"ladder262":null}]},{"id":"1.4","label":"๑.๔","name":"ขอบเขตการดำเนินงาน การบริหารความเสี่ยง และการบริหารจัดการโครงการ","max":10,"old":"ขั้นบันได 4 (มีขอบเขตและความเสี่ยง) + ดุลยพินิจ 6","subs":[{"id":"1.4ก","letter":"ก","name":"ขอบเขตงาน (WBS)","isNew":false,"max":4.0,"plus":false,"consider":["ผู้ขอทุนรับผิดชอบงานเองโดยตรง (ระเบียบ ข้อ 32)","แตกงานเป็นขั้นตอน แยกงานทำเองกับงานจ้าง พร้อมเหตุผล","ขอบเขตเชื่อมกับผลผลิตและตัวชี้วัด"],"full":"ครบ 3 เรื่องและชัดเจน","limit":"ขอบเขตกว้าง ๆ และไม่แยกงานจ้าง","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ผู้ขอรับทุนไม่เป็นผู้รับผิดชอบตามขอบเขตโดยตรง"},{"v":1.0,"plus":false,"t":"ผู้ขอรับทุนเป็นผู้รับผิดชอบตามขอบเขตโดยตรง (ระเบียบ ข้อ 32)"},{"v":2.0,"plus":false,"t":"ผู้ขอรับทุนเป็นผู้รับผิดชอบตามขอบเขตโดยตรง (ระเบียบ ข้อ 32) มีการแสดงลำดับขั้นตอนชัดเจนว่าส่วนใดดำเนินการเอง ส่วนใดจัดซื้อจัดจ้าง"},{"v":3.0,"plus":false,"t":"ผู้ขอรับทุนเป็นผู้รับผิดชอบตามขอบเขตโดยตรง (ระเบียบ ข้อ 32) มีการแสดงลำดับขั้นตอนชัดเจนว่าส่วนใดดำเนินการเอง ส่วนใดจัดซื้อจัดจ้างพร้อมเหตุผล"},{"v":4.0,"plus":false,"t":"ผู้ขอรับทุนเป็นผู้รับผิดชอบตามขอบเขตโดยตรง (ระเบียบ ข้อ 32) มีการแสดงลำดับขั้นตอนชัดเจนว่าส่วนใดดำเนินการเอง ส่วนใดจัดซื้อจัดจ้างพร้อมเหตุผล โดยขอบเขตงานต้องเชื่อมโยงกับผลผลิต/ตัวชี้วัดผลผลิต"}],"notes":[]},"ladder262":null},{"id":"1.4ข","letter":"ข","name":"ตารางความเสี่ยง (Risk Register)","isNew":false,"max":4.0,"plus":false,"consider":["แต่ละความเสี่ยงบอกโอกาสเกิด ผลกระทบ ระดับ วิธีรับมือ และผู้รับผิดชอบ","ครอบคลุมความเสี่ยงดิจิทัล: ข้อมูลส่วนบุคคล (PDPA) ไซเบอร์ ธรรมาภิบาลข้อมูล การเชื่อมต่อระบบ การผูกติดผู้ขาย และ AI (ถ้ามี)"],"full":"ตารางครบองค์ประกอบและครอบคลุมความเสี่ยงดิจิทัล","limit":"บอกความเสี่ยงแต่ไม่มีวิธีรับมือ","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีการระบุความเสี่ยง"},{"v":1.0,"plus":false,"t":"มีการระบุความเสี่ยงแต่ไม่มีการระบุโอกาสและผลกระทบ"},{"v":2.0,"plus":false,"t":"มีการระบุความเสี่ยง มีการระบุโอกาสและผลกระทบ แต่ไม่มีวิธีรับมือ"},{"v":3.0,"plus":false,"t":"มีการระบุความเสี่ยงของโอกาสเกิดผลกระทบ ระดับ วิธีรับมือ และผู้รับผิดชอบ"},{"v":4.0,"plus":false,"t":"มีการระบุความเสี่ยงของโอกาสเกิดผลกระทบ ระดับ วิธีรับมือ และผู้รับผิดชอบ ครอบคลุมความเสี่ยงดิจิทัล: ข้อมูลส่วนบุคคล (PDPA) ไซเบอร์ ธรรมาภิบาลข้อมูล การเชื่อมต่อระบบ การผูกติดผู้ขาย และ AI (ถ้ามี)"}],"notes":[]},"ladder262":null},{"id":"1.4ค","letter":"ค","name":"กลไกบริหารและติดตาม","isNew":false,"max":2.0,"plus":false,"consider":["มีผู้กำกับดูแล เช่น คณะกรรมการ","มีรอบรายงานและแผนติดตามประเมินผล","มีขั้นตอนอนุมัติเมื่อต้องเปลี่ยนแผน"],"full":"มีกลไกครบ และระบุความถี่กับผู้รับผิดชอบ","limit":"ไม่บอกวิธีติดตามงาน","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีการระบุแผนและวิธีการติดตามประเมินผล"},{"v":0.5,"plus":false,"t":"มีการระบุแผนและวิธีการติดตามประเมินผล"},{"v":1.0,"plus":false,"t":"มีผู้กำกับดูแล เช่น คณะกรรมการ มีรอบรายงานและแผนติดตามประเมินผล"},{"v":1.5,"plus":false,"t":"มีผู้กำกับดูแล เช่น คณะกรรมการ มีรอบรายงานและแผนติดตามประเมินผล และมีขั้นตอนอนุมัติเมื่อต้องเปลี่ยนแผน"},{"v":2.0,"plus":false,"t":"มีผู้กำกับดูแล เช่น คณะกรรมการ มีรอบรายงานและแผนติดตามประเมินผล และมีขั้นตอนอนุมัติเมื่อต้องเปลี่ยนแผน พร้อมทั้งมีการระบุความถี่กับผู้รับผิดชอบ"}],"notes":[]},"ladder262":null}]}]},{"id":"2","label":"๒","name":"เกณฑ์ประสิทธิภาพ (Efficiency)","max":20,"q":"ใช้เวลาและเงินอย่างสมเหตุสมผลไหม","topics":[{"id":"2.1","label":"๒.๑","name":"ระยะเวลาที่ใช้ในโครงการมีความเหมาะสม","max":5,"old":"ขั้นบันได 5 ทั้งหมด · ดูแค่ว่าตารางเวลาตรงกัน · ไม่มีดุลยพินิจ","subs":[{"id":"2.1ก","letter":"ก","name":"ภาพใหญ่: ชุดงานหลัก","isNew":false,"max":2.0,"plus":false,"consider":["มีขั้นตอนหลักครบ","ดิจิทัล: สำรวจ → ออกแบบ → พัฒนา → ทดสอบ → ใช้จริง → ส่งมอบ","วิจัย: ทบทวน → เก็บข้อมูล → วิเคราะห์ → ตรวจสอบ → เผยแพร่","เวลารวมเหมาะกับขนาดงาน เทียบกับโครงการคล้ายกัน"],"full":"ขั้นตอนครบและเวลารวมสมเหตุผล","limit":"ขาดช่วงทดสอบหรือส่งมอบ","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ขาดขั้นตอนหลัก เช่น ไม่มีช่วงทดสอบ หรือไม่มีช่วงส่งมอบ"},{"v":1.0,"plus":false,"t":"มีขั้นตอนหลักครบ: สำรวจความต้องการ → ออกแบบ → พัฒนา → ทดสอบ → ใช้งานจริง → ส่งมอบ แต่ระยะเวลารวมสั้นหรือยาวเกินไปเมื่อเทียบกับขนาดงาน"},{"v":2.0,"plus":false,"t":"มีขั้นตอนหลักครบ: สำรวจความต้องการ → ออกแบบ → พัฒนา → ทดสอบ → ใช้งานจริง → ส่งมอบ และระยะเวลารวมเหมาะสมกับขนาดงาน เมื่อเทียบกับโครงการลักษณะคล้ายกัน"}],"notes":[]},"ladder262":{"levels":[{"v":0.0,"plus":false,"t":"ขาดขั้นตอนหลัก เช่น ไม่มีช่วงตรวจสอบผล หรือไม่มีช่วงเผยแพร่/นำไปใช้"},{"v":1.0,"plus":false,"t":"มีขั้นตอนหลักครบ: ทบทวนวรรณกรรม → เก็บข้อมูล → วิเคราะห์ → ตรวจสอบผล → เผยแพร่/นำไปใช้ แต่ระยะเวลารวมสั้นหรือยาวเกินไปเมื่อเทียบกับขนาดงาน"},{"v":2.0,"plus":false,"t":"มีขั้นตอนหลักครบ: ทบทวนวรรณกรรม → เก็บข้อมูล → วิเคราะห์ → ตรวจสอบผล → เผยแพร่/นำไปใช้ และระยะเวลารวมเหมาะสมกับขนาดงาน เมื่อเทียบกับโครงการวิจัยลักษณะคล้ายกัน"}],"notes":[]}},{"id":"2.1ข","letter":"ข","name":"ภาพรอง: กิจกรรมย่อย","isNew":false,"max":1.0,"plus":false,"consider":["มีตารางเวลารายกิจกรรม (Gantt) และลำดับก่อน–หลัง","รวมเวลาจัดซื้อจัดจ้าง รออนุมัติ และทดสอบ"],"full":"ทุกกิจกรรมมีเวลาและลำดับสมเหตุผล","limit":"ไม่มีตารางรายกิจกรรม","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีตารางเวลารายกิจกรรม"},{"v":0.5,"plus":false,"t":"มีตารางเวลารายกิจกรรม (Gantt chart) แสดงลำดับก่อน–หลังของกิจกรรม"},{"v":1.0,"plus":false,"t":"มีตารางเวลารายกิจกรรม (Gantt chart) แสดงลำดับก่อน–หลังของกิจกรรม และรวมเวลาจัดซื้อจัดจ้าง รออนุมัติ และทดสอบไว้แล้ว โดยทุกกิจกรรมมีเวลาและลำดับสมเหตุผล"}],"notes":[]},"ladder262":null},{"id":"2.1ค","letter":"ค","name":"งวดงาน","isNew":false,"max":1.0,"plus":false,"consider":["งวดงาน งวดเงิน และสิ่งส่งมอบ สอดคล้องกับขอบเขต","ทุกงวดมีของตรวจรับได้ และไม่กองงานไว้งวดสุดท้าย"],"full":"ทุกงวดตรวจรับได้และสมดุลกับเวลา","limit":"สิ่งส่งมอบไม่ชัดหรือไม่สัมพันธ์กับงวด","ladder":{"levels":[{"v":0.0,"plus":false,"t":"สิ่งส่งมอบไม่ชัด หรือไม่สัมพันธ์กับงวดงาน"},{"v":0.5,"plus":false,"t":"งวดงาน งวดเงิน และสิ่งส่งมอบ (2.5) สอดคล้องกับขอบเขตงาน (2.4) และทุกงวดมีสิ่งส่งมอบที่ตรวจรับได้"},{"v":1.0,"plus":false,"t":"งวดงาน งวดเงิน และสิ่งส่งมอบ (2.5) สอดคล้องกับขอบเขตงาน (2.4) ทุกงวดมีสิ่งส่งมอบที่ตรวจรับได้ และสัดส่วนเงินแต่ละงวดสมดุลกับปริมาณงาน ไม่กองงานไว้งวดสุดท้าย และไม่เบิกเงินงวดแรกสูงทั้งที่มีงานน้อย"}],"notes":[]},"ladder262":null},{"id":"2.1ง","letter":"ง","name":"เผื่อเวลาและปีงบประมาณ","isNew":false,"max":1.0,"plus":false,"consider":["มีเวลาสำรองเผื่องานล่าช้า","สอดคล้องกับระยะเวลาที่กองทุนกำหนด"],"full":"ระบุเวลาสำรองพร้อมเหตุผล","limit":"ไม่เผื่อเวลา","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่เผื่อเวลา หรือระยะเวลาไม่สอดคล้องกับที่กองทุนกำหนด"},{"v":0.5,"plus":false,"t":"ระยะเวลาสอดคล้องกับที่กองทุนกำหนด แต่ไม่มีเวลาสำรองเผื่องานล่าช้า"},{"v":1.0,"plus":false,"t":"ระยะเวลาสอดคล้องกับที่กองทุนกำหนด และมีเวลาสำรองเผื่องานล่าช้าพร้อมเหตุผล"}],"notes":[]},"ladder262":null}]},{"id":"2.2","label":"๒.๒","name":"งบประมาณที่ใช้ดำเนินโครงการมีความเหมาะสม","max":15,"old":"ขั้นบันได 7 (แบ่งหมวด + อย่างน้อย 2 งวด ได้ 3/5/7) + ดุลยพินิจ 8","subs":[{"id":"2.2ก","letter":"ก","name":"แจกแจงรายการ","isNew":false,"max":3.0,"plus":true,"consider":["ทุกรายการแสดง จำนวน × ราคาต่อหน่วย × ระยะเวลา","ผูกกับกิจกรรมและงวดงาน"],"full":"ทุกรายการแจกแจงและผูกกิจกรรม/งวด","limit":"มีแค่ยอดรวมรายหมวด","ladder":{"levels":[{"v":0.0,"plus":false,"t":"มีแค่ยอดรวมรายหมวด ไม่แจกแจงรายการ"},{"v":1.0,"plus":false,"t":"แจกแจงบางรายการเป็น จำนวน × ราคาต่อหน่วย × ระยะเวลา แต่ยังมีรายการที่เป็นยอดเหมาก้อนใหญ่ไม่แจกแจง"},{"v":2.0,"plus":false,"t":"แจกแจงครบทุกรายการเป็น จำนวน × ราคาต่อหน่วย × ระยะเวลา"},{"v":3.0,"plus":false,"t":"แจกแจงครบทุกรายการเป็น จำนวน × ราคาต่อหน่วย × ระยะเวลา และทุกรายการผูกกับกิจกรรมและงวดงาน"},{"v":4.0,"plus":true,"t":"แจกแจงครบทุกรายการเป็น จำนวน × ราคาต่อหน่วย × ระยะเวลา ทุกรายการผูกกับกิจกรรมและงวดงาน และตัวเลขถูกต้องทั้งหมด คือ ยอดรายการ ยอดรายหมวด และยอดรวมทั้งสิ้นตรงกัน จัดหมวดค่าใช้จ่ายถูกต้อง และจำนวน/หน่วยตรงกับคำอธิบาย"}],"notes":[]},"ladder262":null},{"id":"2.2ข","letter":"ข","name":"อ้างอิงหลักเกณฑ์","isNew":false,"max":3.0,"plus":true,"consider":["ทุกรายการบอกระเบียบหรืออัตราที่ใช้ เช่น กระทรวงการคลัง เกณฑ์กองทุน ราคากลางคอมพิวเตอร์กระทรวงดีอี"],"full":"อ้างครบทุกรายการ","limit":"ไม่อ้างหลักเกณฑ์","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่อ้างหลักเกณฑ์"},{"v":1.0,"plus":false,"t":"อ้างหลักเกณฑ์บางรายการ (ไม่ถึงครึ่งหนึ่งของรายการ)"},{"v":2.0,"plus":false,"t":"อ้างหลักเกณฑ์เกินครึ่งหนึ่งของรายการ"},{"v":3.0,"plus":false,"t":"อ้างหลักเกณฑ์ครบทุกรายการ เช่น ระเบียบกระทรวงการคลัง หลักเกณฑ์กองทุน ราคากลางคอมพิวเตอร์กระทรวงดีอี"},{"v":4.0,"plus":true,"t":"อ้างหลักเกณฑ์ครบทุกรายการ อัตราที่ใช้ไม่เกินเพดานตามหลักเกณฑ์ที่อ้าง และไม่มีรายการต้องห้ามตามหลักเกณฑ์กองทุน (4.9)"}],"notes":[]},"ladder262":null},{"id":"2.2ค","letter":"ค","name":"ใบเสนอราคา","isNew":false,"max":3.0,"plus":true,"consider":["รายการที่ไม่มีอัตรากำหนด แนบใบเสนอราคาจากผู้ขายอิสระ แนะนำ 3 ราย"],"full":"ครบทุกรายการที่ต้องสืบราคา","limit":"ไม่มีใบเสนอราคา","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีใบเสนอราคาสำหรับรายการที่ไม่มีอัตรากำหนด"},{"v":1.0,"plus":false,"t":"มีใบเสนอราคาบางรายการ"},{"v":2.0,"plus":false,"t":"มีใบเสนอราคาครบทุกรายการที่ไม่มีอัตรากำหนด อย่างน้อยรายการละ 1 ราย"},{"v":3.0,"plus":false,"t":"มีใบเสนอราคาครบทุกรายการที่ไม่มีอัตรากำหนด อย่างน้อยรายการละ 3 ราย จากผู้ขายที่ไม่เกี่ยวข้องกัน"},{"v":4.0,"plus":true,"t":"มีใบเสนอราคาครบทุกรายการ รายการละ 3 ราย จากผู้ขายที่ไม่เกี่ยวข้องกัน ราคาที่ตั้งงบตรงกับใบเสนอราคา (ใช้ราคาต่ำสุด หรือมีเหตุผลถ้าไม่ใช้) และรายละเอียดในใบเสนอราคาตรงกับขอบเขตงาน"}],"notes":["ถ้าทุกรายการมีอัตรากำหนดแล้ว ไม่ต้องใช้ใบเสนอราคา ให้คะแนนเต็ม"]},"ladder262":null},{"id":"2.2ง","letter":"ง","name":"เทียบราคาตลาด","isNew":false,"max":3.0,"plus":false,"consider":["เทียบกับราคากลาง e-GP โครงการรัฐคล้ายกัน หรือราคาประกาศผู้ขาย","แนบหลักฐานและอธิบายส่วนต่าง"],"full":"เทียบรายการสำคัญครบพร้อมหลักฐาน","limit":"ไม่มีการเทียบ","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีการเทียบราคา"},{"v":1.0,"plus":false,"t":"กล่าวถึงการเทียบราคา แต่ไม่มีหลักฐาน"},{"v":2.0,"plus":false,"t":"เทียบราคารายการสำคัญกับราคากลาง e-GP โครงการรัฐคล้ายกัน หรือราคาประกาศผู้ขาย มีหลักฐานบางส่วน"},{"v":3.0,"plus":false,"t":"เทียบราคารายการสำคัญครบพร้อมหลักฐาน และอธิบายเหตุผลถ้าราคาต่างจากตลาด"}],"notes":["รายการสำคัญ = รายการที่มีมูลค่าสูง (แนะนำ: รายการที่รวมกันแล้วไม่น้อยกว่าร้อยละ 80 ของงบประมาณ)"]},"ladder262":null},{"id":"2.2จ","letter":"จ","name":"ความคุ้มค่า","isNew":false,"max":3.0,"plus":false,"consider":["สัดส่วนหมวดเงินเหมาะสม เช่น ค่าบริหารไม่สูงเกิน","ต้นทุนต่อผู้รับประโยชน์ต่อหัว เทียบทางเลือกอื่น","ไม่ซ้ำงบอื่น มีการสมทบ และใช้ของรัฐที่มีอยู่ เช่น คลาวด์กลาง"],"full":"แสดงความคุ้มค่าเป็นตัวเลขพร้อมเหตุผล","limit":"ไม่แสดงความคุ้มค่า","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่แสดงความคุ้มค่า"},{"v":1.0,"plus":false,"t":"สัดส่วนหมวดเงินเหมาะสม เช่น ค่าบริหารไม่สูงเกิน ค่าครุภัณฑ์ไม่เกินเกณฑ์กองทุน และงบส่วนใหญ่ลงในงานที่สร้างผลผลิตหลัก"},{"v":2.0,"plus":false,"t":"สัดส่วนหมวดเงินเหมาะสม และแสดงต้นทุนต่อหน่วยเป็นตัวเลข เช่น ต้นทุนต่อผู้รับประโยชน์ 1 คน หรือต่อผลผลิต 1 หน่วย เทียบกับทางเลือกอื่น"},{"v":3.0,"plus":false,"t":"สัดส่วนหมวดเงินเหมาะสม แสดงต้นทุนต่อหน่วยเทียบกับทางเลือกอื่น ไม่ซ้ำกับงบจากแหล่งอื่น (3.9) และมีการสมทบ (เงิน คน ข้อมูล โครงสร้างพื้นฐาน) หรือใช้ของรัฐที่มีอยู่ เช่น คลาวด์กลางภาครัฐ"}],"notes":[]},"ladder262":{"levels":[{"v":0.0,"plus":false,"t":"ไม่แสดงความคุ้มค่า"},{"v":1.0,"plus":false,"t":"สัดส่วนหมวดเงินเหมาะสม งบส่วนใหญ่ลงในกิจกรรมวิจัยหลัก (เก็บข้อมูล ทดลอง วิเคราะห์) ไม่ใช่การจ้างภายนอกหรือค่าบริหาร"},{"v":2.0,"plus":false,"t":"สัดส่วนเหมาะสม และแสดงต้นทุนต่อผลงานวิจัยที่ส่งมอบ (เช่น ต้นแบบ ชุดข้อมูล แบบจำลอง) หรือต่อผู้นำผลวิจัยไปใช้ที่ยืนยันแล้ว เทียบกับการจ้างทำหรือซื้อสำเร็จรูป"},{"v":3.0,"plus":false,"t":"สัดส่วนเหมาะสม แสดงต้นทุนต่อผลงานวิจัย ใช้โครงสร้างพื้นฐานวิจัยที่มีอยู่ (ห้องปฏิบัติการ ข้อมูล เครื่องมือของต้นสังกัด/ภาคี) มีการสมทบ และไม่ซ้ำกับทุนวิจัยอื่น (3.9)"}],"notes":[]}}]}]},{"id":"3","label":"๓","name":"เกณฑ์ประสิทธิผล (Effectiveness)","max":40,"q":"เกิดประโยชน์จริงไหม และอยู่ต่อได้หลังหมดทุนไหม","topics":[{"id":"3.1","label":"๓.๑","name":"การขยายผลในการสร้างผลกระทบหรือประโยชน์ที่เกิดขึ้นในวงกว้าง","max":20,"old":"ขั้นบันได 8 (มีผลผลิต ผลลัพธ์ SIA) + ดุลยพินิจ 12 · สูงสุดแค่ \"มีการวิเคราะห์ผลที่คาดว่าจะเกิด\" ไม่ต้องมีหลักฐานตัวเลข","subs":[{"id":"3.1ก","letter":"ก","name":"ผลผลิต ผลลัพธ์ ผู้รับประโยชน์","isNew":false,"max":4.0,"plus":false,"consider":["ผลผลิตมีเป้าหมายทั้งเชิงตัวเลขและเชิงคุณภาพ","ผลลัพธ์ตรงวัตถุประสงค์ และบอกประโยชน์ที่ได้รับ","ประมาณผู้รับประโยชน์ทางตรง/ทางอ้อม พร้อมวิธีคำนวณ"],"full":"ครบ 3 เรื่องและวิธีประมาณตรวจสอบได้","limit":"ตัวเลขผู้รับประโยชน์ไม่มีที่มา","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่ระบุผลผลิตหรือผลลัพธ์ที่มีเป้าหมาย"},{"v":1.0,"plus":false,"t":"ผลผลิตมีเป้าหมายเชิงตัวเลขหรือเชิงคุณภาพอย่างใดอย่างหนึ่ง"},{"v":2.0,"plus":false,"t":"ผลผลิตมีเป้าหมายทั้งเชิงตัวเลขและเชิงคุณภาพ"},{"v":3.0,"plus":false,"t":"ผลผลิตมีเป้าหมายทั้งเชิงตัวเลขและเชิงคุณภาพ และผลลัพธ์ตรงกับวัตถุประสงค์ โดยบอกว่ากลุ่มเป้าหมายได้ประโยชน์อะไร"},{"v":4.0,"plus":false,"t":"ผลผลิตมีเป้าหมายทั้งเชิงตัวเลขและเชิงคุณภาพ ผลลัพธ์ตรงกับวัตถุประสงค์ และประมาณจำนวนผู้รับประโยชน์ทางตรง/ทางอ้อม พร้อมวิธีคำนวณที่ตรวจสอบได้ (ไม่ใช้จำนวนประชากรทั้งพื้นที่โดยไม่มีเหตุผล)"}],"notes":[]},"ladder262":null},{"id":"3.1ข","letter":"ข","name":"เส้นทางผลกระทบ","isNew":false,"max":3.0,"plus":false,"consider":["ผลผลิต → ผลลัพธ์ → ผลกระทบด้านเศรษฐกิจ สังคม หรือสิ่งแวดล้อม","บอกผลเสียหรือผลที่ไม่ตั้งใจ พร้อมวิธีลดผลเสีย"],"full":"เส้นทางครบและพิจารณาผลทางลบ","limit":"พูดแต่ผลดีแบบกว้าง ๆ","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่อธิบายเส้นทางผลกระทบ"},{"v":1.0,"plus":false,"t":"พูดถึงผลดีแบบกว้าง ๆ โดยไม่เชื่อมจากผลผลิตและผลลัพธ์"},{"v":2.0,"plus":false,"t":"อธิบายเส้นทาง ผลผลิต → ผลลัพธ์ → ผลกระทบด้านเศรษฐกิจ สังคม หรือสิ่งแวดล้อม ครบและเชื่อมกัน"},{"v":3.0,"plus":false,"t":"อธิบายเส้นทาง ผลผลิต → ผลลัพธ์ → ผลกระทบ ครบและเชื่อมกัน และระบุผลเสียหรือผลที่ไม่ได้ตั้งใจ พร้อมวิธีลดผลเสีย"}],"notes":[]},"ladder262":null},{"id":"3.1ค","letter":"ค","name":"วิธีประเมิน SIA/SROI","isNew":false,"max":7.0,"plus":false,"consider":["กำหนดขอบเขตและให้ผู้มีส่วนได้ส่วนเสียมีส่วนร่วม","มีแผนที่ผลกระทบและตัวชี้วัดผลลัพธ์","เลือกวิธีที่เหมาะกับโครงการ ถ้าใช้ SROI ต้องบอกแหล่งที่มาของค่าเงินแทนแต่ละผลลัพธ์","ถ้าใช้ SROI ต้องหักออก: ผลที่เกิดอยู่แล้วแม้ไม่มีโครงการ / ผลจากปัจจัยอื่น / ผลที่แค่ย้ายที่ / ผลที่ลดลงตามเวลา และบอกว่าผลอยู่ได้กี่ปี","ถ้าใช้ SROI ต้องคิดลดค่าเงินในอนาคต และทดสอบเมื่อสมมติฐานเปลี่ยน แสดงเป็นช่วงค่า","ไม่นับซ้ำ ไม่อ้างเกินจริง"],"full":"มีหลักฐานครบทุกข้อตามวิธีที่เลือก (ถ้าไม่แปลงเป็นเงิน ไม่ต้องทำข้อที่เกี่ยวกับเงิน) · ระดับ 3: องค์ประกอบครบแต่หลักฐานบางส่วนไม่ชัด · ระดับ 2: มีวิธีวัดแต่อธิบายเหตุผลหรือข้อจำกัดไม่ครบ","limit":"แสดงแค่อัตราส่วน SROI เช่น “1:5” โดยไม่หักและไม่คิดลด ได้ไม่เกินระดับ 1","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีการวิเคราะห์ผลกระทบ (SIA/SROI)"},{"v":1.0,"plus":false,"t":"มีตัวเลขมูลค่าผลกระทบหรืออัตราส่วน SROI (เช่น 1:5) แต่ไม่อธิบายวิธี ไม่หัก และไม่คิดลด"},{"v":2.0,"plus":false,"t":"กำหนดขอบเขตการประเมิน และระบุผู้มีส่วนได้ส่วนเสียที่ร่วมประเมิน"},{"v":3.0,"plus":false,"t":"ข้อ 2 + มีแผนที่ผลกระทบ (Impact Map) และตัวชี้วัดผลลัพธ์"},{"v":4.0,"plus":false,"t":"ข้อ 3 + เลือกวิธีประเมินที่เหมาะกับโครงการพร้อมเหตุผล และถ้าใช้ SROI ต้องบอกแหล่งที่มาของค่าเงินแทน (Financial Proxy) ทุกผลลัพธ์"},{"v":5.0,"plus":false,"t":"ข้อ 4 + หักผลที่ไม่ใช่ของโครงการ: ผลที่เกิดอยู่แล้วแม้ไม่มีโครงการ / ผลจากปัจจัยอื่น / ผลที่แค่ย้ายที่ / ผลที่ลดลงตามเวลา และบอกว่าผลอยู่ได้กี่ปี"},{"v":6.0,"plus":false,"t":"ข้อ 5 + คิดลดค่าเงินในอนาคต (Discount Rate) และทดสอบเมื่อสมมติฐานเปลี่ยน (Sensitivity) แสดงเป็นช่วงค่า"},{"v":7.0,"plus":false,"t":"ข้อ 6 + ไม่นับซ้ำ (ผู้รับประโยชน์กลุ่มเดียวกันและประโยชน์เดียวกันไม่นับหลายด้าน) ไม่อ้างเกินจริง และมีหลักฐานครบทุกข้อ"}],"notes":["กรณีไม่แปลงเป็นเงิน: ระดับ 4 = เลือกวิธีวัดเหมาะสมพร้อมเหตุผล / ระดับ 5 = แยกผลของโครงการออกจากปัจจัยอื่นด้วยค่าฐานหรือกลุ่มเปรียบเทียบ และบอกระยะเวลาที่ผลคงอยู่ / ระดับ 6 = ระบุข้อจำกัดและความไม่แน่นอนของผลประเมิน"]},"ladder262":null},{"id":"3.1ง","letter":"ง","name":"หลักฐานตัวเลขทุกตัว","isNew":false,"max":4.0,"plus":false,"consider":["ทุกตัวเลขมีที่มา เช่น สถิติทางการ งานวิจัย ผลสำรวจที่บอกวิธีสุ่ม หรือข้อมูลจริงจากโครงการเดิม","มีบัญชีสมมติฐาน และแนบไฟล์คำนวณที่ตรวจย้อนกลับได้","ตัวเลขที่ไม่มีหลักฐานไม่นับรวม"],"full":"ตรวจย้อนกลับได้ 100% และแนบไฟล์คำนวณ","limit":"ตัวเลขสำคัญไม่มีแหล่งอ้างอิง","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ตัวเลขสำคัญไม่มีแหล่งอ้างอิง"},{"v":1.0,"plus":false,"t":"มีแหล่งอ้างอิงบางตัวเลข แต่ตัวเลขสำคัญ เช่น จำนวนผู้รับประโยชน์ มูลค่าต่อหน่วย สัดส่วนที่ลดลง ยังไม่มีที่มา"},{"v":2.0,"plus":false,"t":"ตัวเลขสำคัญทุกตัวมีแหล่งอ้างอิง เช่น สถิติทางการ งานวิจัย ผลสำรวจที่บอกวิธีสุ่ม หรือข้อมูลจริงจากโครงการเดิม"},{"v":3.0,"plus":false,"t":"ตัวเลขสำคัญทุกตัวมีแหล่งอ้างอิง มีบัญชีสมมติฐาน (รายการสมมติฐานที่ใช้คำนวณ) และแนบไฟล์คำนวณ"},{"v":4.0,"plus":false,"t":"ตัวเลขทุกตัวมีแหล่งอ้างอิง มีบัญชีสมมติฐานและไฟล์คำนวณ ตรวจย้อนกลับได้ 100% และไม่มีตัวเลขที่ไม่มีหลักฐานนับรวมอยู่"}],"notes":["ผู้ประเมินลองคูณตัวเลขในตาราง SIA (3.3) ซ้ำทุกแถว ถ้าผลไม่ตรงกับที่กรอกไว้ ได้ไม่เกิน 2 คะแนน"]},"ladder262":null},{"id":"3.1จ","letter":"จ","name":"ศักยภาพขยายผล","isNew":false,"max":2.0,"plus":false,"consider":["นำไปใช้ต่อในพื้นที่หรือหน่วยงานอื่นได้","ยกระดับเป็นมาตรฐานหรือนโยบายได้","ครอบคลุมกลุ่มเปราะบาง"],"full":"มีเหตุผลและเงื่อนไขการขยายผลชัดเจน","limit":"ไม่พูดถึงการขยายผล","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่พูดถึงการขยายผล"},{"v":1.0,"plus":false,"t":"ระบุว่านำไปใช้ต่อในพื้นที่หรือหน่วยงานอื่น หรือยกระดับเป็นมาตรฐาน/นโยบายได้ แต่ไม่มีเหตุผลหรือเงื่อนไข"},{"v":1.5,"plus":false,"t":"ระบุการขยายผล พร้อมเหตุผลและเงื่อนไขที่ชัดเจน"},{"v":2.0,"plus":false,"t":"ระบุการขยายผล พร้อมเหตุผลและเงื่อนไขที่ชัดเจน และบอกว่าครอบคลุมหรือเข้าถึงกลุ่มเปราะบางอย่างไร เช่น ผู้สูงอายุ ผู้พิการ พื้นที่ห่างไกล"}],"notes":["ถ้าโครงการไม่เกี่ยวกับกลุ่มเปราะบางโดยตรง ให้ดูการยกระดับเป็นมาตรฐาน/นโยบายแทน"]},"ladder262":null}]},{"id":"3.2","label":"๓.๒","name":"การดำเนินงานร่วมกับผู้ที่มีส่วนเกี่ยวข้องและความยั่งยืนหลังจากเสร็จสิ้นโครงการ","max":20,"old":"ขั้นบันได 8 (มีผู้รับผิดชอบ + รายละเอียด \"เกินกึ่ง/ครบ\") + ดุลยพินิจ 12 · ไม่ถามเรื่องเงินหลังจบทุน","subs":[{"id":"3.2ก","letter":"ก","name":"ภาคีความร่วมมือ","isNew":false,"max":4.0,"plus":false,"consider":["หน่วยงานร่วม บทบาท และสิ่งที่สมทบ (เงิน คน ข้อมูล โครงสร้างพื้นฐาน)","มีหนังสือยืนยันลงนามโดยผู้มีอำนาจ","มีแผนให้ผู้มีส่วนได้ส่วนเสียมีส่วนร่วม"],"full":"ครบ 3 เรื่องพร้อมหลักฐาน","limit":"อ้างหน่วยงานร่วมแต่ไม่มีหนังสือยืนยัน ได้ 0 ในประเด็นนั้น","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีหน่วยงานร่วม หรืออ้างหน่วยงานร่วมแต่ไม่มีหนังสือยืนยันเลย"},{"v":1.0,"plus":false,"t":"มีหนังสือยืนยันจากหน่วยงานร่วม ลงนามโดยผู้มีอำนาจ อย่างน้อย 1 หน่วยงาน"},{"v":2.0,"plus":false,"t":"มีหนังสือยืนยันจากหน่วยงานร่วม และระบุบทบาทของแต่ละหน่วยงานชัดเจน"},{"v":3.0,"plus":false,"t":"มีหนังสือยืนยัน ระบุบทบาท และระบุสิ่งที่สมทบ (เงิน คน ข้อมูล โครงสร้างพื้นฐาน)"},{"v":4.0,"plus":false,"t":"มีหนังสือยืนยัน ระบุบทบาทและสิ่งที่สมทบ มีแผนให้ผู้มีส่วนได้ส่วนเสียมีส่วนร่วม และผู้ใช้หลักของผลงานมีหนังสือยืนยันด้วย"}],"notes":["หน่วยงานที่อ้างถึงแต่ไม่มีหนังสือยืนยัน ไม่นับ"]},"ladder262":null},{"id":"3.2ข","letter":"ข","name":"แผนหลังจบโครงการ","isNew":false,"max":4.0,"plus":false,"consider":["ใครดูแลต่อ ทำอะไร และช่วงเวลาไหน","สอดคล้องกับผลกระทบ (3.3) และความเสี่ยง (3.6)"],"full":"แผนครบ มีกรอบเวลา และสอดคล้องกับส่วนอื่น","limit":"มีแค่ชื่อผู้รับผิดชอบ","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีแผนหลังจบโครงการ"},{"v":1.0,"plus":false,"t":"มีแค่ชื่อผู้รับผิดชอบดูแลต่อ"},{"v":2.0,"plus":false,"t":"ระบุผู้รับผิดชอบ สิ่งที่จะทำต่อ และช่วงเวลา"},{"v":3.0,"plus":false,"t":"ระบุผู้รับผิดชอบ สิ่งที่จะทำต่อ และช่วงเวลา โดยผู้รับผิดชอบเป็นหน่วยงานที่มีภารกิจรองรับการดูแลต่อ (ไม่ใช่ทีมโครงการชั่วคราวที่ไม่มีแหล่งเงิน)"},{"v":4.0,"plus":false,"t":"ระบุผู้รับผิดชอบที่มีภารกิจรองรับ สิ่งที่จะทำต่อ และช่วงเวลา และแผนสอดคล้องกับผลกระทบ (3.3) และความเสี่ยง (3.6)"}],"notes":[]},"ladder262":null},{"id":"3.2ค","letter":"ค","name":"ความยั่งยืนทางการเงิน","isNew":true,"max":5.0,"plus":false,"consider":["ประมาณค่าดูแลระบบและดำเนินงาน 1-2 ปีหลังจบทุน","แหล่งเงินหลังจบทุน เช่น ค่าบริการ งบประจำหน่วยงาน (มีหลักฐาน) ร่วมทุนรัฐ–เอกชน หรือต่อยอดเพื่อประโยชน์สาธารณะ","ถ้ามีรายได้ ต้องมีประมาณการและจุดคุ้มทุน"],"full":"มีประมาณการค่าดูแลระบบและแหล่งเงินที่มีหลักฐาน","limit":"ไม่บอกแหล่งเงินหลังจบทุน","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่มีทั้งประมาณการค่าใช้จ่ายและแหล่งเงินหลังจบทุน"},{"v":1.0,"plus":false,"t":"มีอย่างใดอย่างหนึ่ง คือ ประมาณการค่าดูแลระบบ 1–2 ปี หรือระบุแหล่งเงิน แต่ไม่มีตัวเลขหรือหลักฐาน"},{"v":2.0,"plus":false,"t":"มีประมาณการค่าดูแลระบบและดำเนินงาน 1–2 ปีหลังจบทุนเป็นตัวเลข เช่น ค่าบุคลากร ค่าคลาวด์ ค่าปรับปรุงข้อมูล"},{"v":3.0,"plus":false,"t":"มีประมาณการค่าดูแลระบบ 1–2 ปีเป็นตัวเลข และระบุแหล่งเงินหลังจบทุน เช่น ค่าบริการ งบประจำหน่วยงาน ร่วมทุนรัฐ–เอกชน หรือต่อยอดเพื่อประโยชน์สาธารณะ"},{"v":4.0,"plus":false,"t":"มีประมาณการค่าดูแลระบบ 1–2 ปี ระบุแหล่งเงิน และแหล่งเงินมีหลักฐานยืนยัน เช่น หนังสือยืนยันการตั้งงบประจำ หรือข้อตกลงร่วมทุน"},{"v":5.0,"plus":false,"t":"มีประมาณการ แหล่งเงินมีหลักฐาน และครอบคลุมค่าใช้จ่ายที่ประมาณไว้ทั้งหมด พร้อมแนวทางต่อยอดหลังดำเนินการ (ถ้ามีรายได้ ต้องมีประมาณการรายได้และจุดคุ้มทุน)"}],"notes":[]},"ladder262":null},{"id":"3.2ง","letter":"ง","name":"แผนการขยายผล","isNew":true,"max":4.0,"plus":false,"consider":["ขยายไปพื้นที่หรือหน่วยงานอื่น และยกระดับเป็นนโยบายหรือมาตรฐาน","มีแผนเวลา เงื่อนไข และผู้รับผิดชอบ","เปิดให้ใช้ซ้ำ เช่น open source, open data หรือ API"],"full":"มีแผนขยายผลที่ทำได้จริง","limit":"พูดถึงแต่ไม่มีแผน","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่พูดถึงการขยายผล"},{"v":1.0,"plus":false,"t":"พูดถึงการขยายผล แต่ไม่มีแผน"},{"v":2.0,"plus":false,"t":"มีแผนขยายไปพื้นที่/หน่วยงานอื่น หรือยกระดับเป็นนโยบาย/มาตรฐาน โดยระบุพื้นที่หรือหน่วยงานเป้าหมายชัด"},{"v":3.0,"plus":false,"t":"มีแผนขยายผล ระบุเป้าหมายชัด และมีแผนเวลา เงื่อนไข และผู้รับผิดชอบ"},{"v":4.0,"plus":false,"t":"มีแผนขยายผลพร้อมแผนเวลา เงื่อนไข และผู้รับผิดชอบ และเปิดให้นำไปใช้ซ้ำ เช่น open source, open data หรือ API พร้อมระบุสัญญาอนุญาต (license)"}],"notes":[]},"ladder262":null},{"id":"3.2จ","letter":"จ","name":"การส่งมอบและความเป็นเจ้าของ","isNew":true,"max":3.0,"plus":false,"consider":["แผนสอนงานผู้รับมอบ และคู่มือระบบ","กำหนดเจ้าของทรัพย์สินทางปัญญา ข้อมูล และซอร์สโค้ด","แผนส่งต่อ"],"full":"ครบทั้งสองเรื่อง","limit":"ไม่ระบุเจ้าของหรือผู้รับมอบ","ladder":{"levels":[{"v":0.0,"plus":false,"t":"ไม่ระบุผู้รับมอบหรือเจ้าของ"},{"v":1.0,"plus":false,"t":"ระบุผู้รับมอบ และมีแผนสอนงาน/ถ่ายทอดความรู้และคู่มือระบบ"},{"v":2.0,"plus":false,"t":"ระบุผู้รับมอบ มีแผนสอนงานและคู่มือ และกำหนดเจ้าของทรัพย์สินทางปัญญา ข้อมูล และซอร์สโค้ดชัดเจน รวมถึงงานที่จ้างภายนอก"},{"v":3.0,"plus":false,"t":"ครบตามข้อ 2 และมีแผนส่งต่อ (ส่งมอบให้ใคร เมื่อไร และเงื่อนไขอะไร)"}],"notes":[]},"ladder262":null}]}]}]</script>
+<script>
+(function () {
+'use strict';
+const SIDES = JSON.parse(document.getElementById('criteria').textContent);
+const SUBS = [];
+SIDES.forEach(s => s.topics.forEach(t => t.subs.forEach(x => { x.topic = t; x.side = s; SUBS.push(x); })));
+const SUB = Object.fromEntries(SUBS.map(x => [x.id, x]));
+
+/* documents outside the application form that a sub-criterion often needs (from the scoring skill) */
+const DOCS = {
+  '1.1ค': 'ฐานข้อมูลโครงการ (ตรวจว่าไม่ซ้ำระบบรัฐที่มี)', '1.1ง': 'หลักฐานความต้องการผู้ใช้ (ผลสำรวจ/หนังสือแสดงความต้องการ)',
+  '1.3ก': 'CV และหลักฐานผลงานหัวหน้าโครงการ', '1.3ข': 'CV ผู้ร่วมงานหลัก', '1.3ค': 'ภาระงานในโครงการอื่นที่ได้รับทุน',
+  '2.1ก': 'ข้อมูลโครงการคล้ายกันที่เคยได้ทุน', '2.2ข': 'อัตราเพดานตามระเบียบที่อ้าง', '2.2ค': 'ใบเสนอราคา',
+  '2.2ง': 'ราคากลาง e-GP / โครงการรัฐคล้ายกัน', '2.2จ': 'หนังสือรับรองไม่ได้รับทุนซ้ำซ้อน และหลักฐานการสมทบ',
+  '3.1ค': 'ไฟล์คำนวณ SIA/SROI', '3.1ง': 'แหล่งที่มาตัวเลขและไฟล์คำนวณ', '3.2ก': 'หนังสือยืนยันหน่วยงานร่วม/ผู้ใช้หลัก',
+  '3.2ข': 'หนังสือรับดูแลต่อหลังจบโครงการ', '3.2ค': 'หลักฐานแหล่งเงินหลังจบทุน', '3.2จ': 'ข้อตกลงกรรมสิทธิ์ IP/ข้อมูล/ซอร์สโค้ด'
+};
+
+const $ = id => document.getElementById(id);
+const fmt = n => { const r = Math.round(n * 100) / 100; return Number.isInteger(r) ? String(r) : String(r); };
+const el = (tag, attrs, ...kids) => {
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat(Infinity)) if (k != null) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return e;
+};
+
+/* ---------- state (saved in this browser) ---------- */
+const KEY = 'defund-score-form';
+const S = { kind: '26(1)', market: false, mine: blankEval() };
+function blankEval() { return { levels: {}, pending: {}, notes: {} }; }
+function proj() { return { kind: S.kind, market: S.market }; }
+function load() {
+  try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d) { S.kind = d.kind === '26(2)' ? '26(2)' : '26(1)'; S.market = !!d.market; S.mine = { levels: d.levels || {}, pending: d.pending || {}, notes: d.notes || {} }; } }
+  catch (e) { /* start blank */ }
+}
+let saveTimer = null;
+function queueSave() {
+  $('status-text').textContent = 'กำลังบันทึก…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(KEY, JSON.stringify({ kind: S.kind, market: S.market, ...S.mine, updatedAt: Date.now() }));
+      $('status-text').textContent = 'บันทึกในเบราว์เซอร์นี้แล้ว · ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); }
+    catch (e) { $('status-text').textContent = 'เบราว์เซอร์นี้บันทึกไม่ได้ ดาวน์โหลด CSV เก็บไว้ก่อนปิดหน้า'; }
+  }, 500);
+}
+
+/* ---------- rubric rules ---------- */
+function effMax(sub, p) {
+  p = p || proj();
+  if (sub.id === '2.2ง') return p.market ? 3 : 0;
+  if (sub.plus) return p.market ? sub.max : sub.max + 1;
+  return sub.max;
+}
+function levelsFor(sub, p) {
+  p = p || proj();
+  const lad = (p.kind === '26(2)' && sub.ladder262) ? sub.ladder262 : sub.ladder;
+  let lv = lad.levels.filter(l => !(l.plus && p.market));
+  if (!lv.some(l => l.v === 0)) lv = [{ v: 0, t: 'ไม่ปรากฏ หรือยังไม่ถึงขั้นต่ำสุดของข้อนี้', added: true }, ...lv];
+  return { levels: lv, notes: lad.notes, is262: lad === sub.ladder262 };
+}
+function scoreOf(ev, sub, p) {
+  const v = ev.levels[sub.id];
+  if (typeof v !== 'number') return null;
+  return Math.min(v, effMax(sub, p));
+}
+function potentialOf(ev, sub, p) {
+  const s = scoreOf(ev, sub, p);
+  const pd = ev.pending[sub.id];
+  if (pd && pd.on && typeof pd.max === 'number') return Math.max(s || 0, Math.min(pd.max, effMax(sub, p)));
+  return s || 0;
+}
+function activeSubs(p) { return SUBS.filter(x => effMax(x, p) > 0); }
+function tallies(ev, p) {
+  p = p || proj();
+  const out = { total: 0, pot: 0, answered: 0, count: 0, topic: {}, side: {} };
+  for (const x of activeSubs(p)) {
+    const s = scoreOf(ev, x, p);
+    out.count++; if (s != null) out.answered++;
+    const v = s || 0, pv = potentialOf(ev, x, p);
+    out.total += v; out.pot += pv;
+    out.topic[x.topic.id] = (out.topic[x.topic.id] || 0) + v;
+    out.side[x.side.id] = (out.side[x.side.id] || 0) + v;
+    out['pt' + x.topic.id] = (out['pt' + x.topic.id] || 0) + pv;
+  }
+  return out;
+}
+
+/* ---------- scoring form ---------- */
+function renderForm() {
+  const host = $('form'); host.textContent = '';
+  const p = proj(); const ro = false;
+  for (const s of SIDES) {
+    const sec = el('section', { class: 'side' },
+      el('div', { class: 'side-head' },
+        el('div', null, el('h2', { text: s.label + '. ' + s.name }), el('div', { class: 'q', text: s.q || '' })),
+        el('div', { class: 'num', id: 'side-' + s.id })));
+    for (const t of s.topics) {
+      const top = el('div', { class: 'topic' },
+        el('div', { class: 'topic-head' }, el('h3', { text: t.label + ' ' + t.name }), el('div', { class: 'score num', id: 'topic-' + t.id })));
+      const list = el('div', { class: 'subs' });
+      for (const x of t.subs) { if (effMax(x, p) > 0) list.append(renderSub(x, p, ro)); }
+      top.append(list); sec.append(top);
+    }
+    host.append(sec);
+  }
+}
+function renderSub(x, p, ro) {
+  const { levels, notes, is262 } = levelsFor(x, p);
+  const mx = effMax(x, p), cur = S.mine.levels[x.id];
+  const card = el('article', { class: 'sub', id: 'sub-' + x.id });
+  const scoreEl = el('div', { class: 'sub-score num', id: 'ss-' + x.id });
+  card.append(el('div', { class: 'sub-head' },
+    el('div', null,
+      el('div', { class: 'sub-title', text: x.letter + '. ' + x.name }),
+      el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;margin-top:4px' },
+        el('span', { class: 'chip', text: 'เต็ม ' + fmt(mx) }),
+        is262 ? el('span', { class: 'chip accent', text: 'เกณฑ์ 26(2)' }) : null,
+        x.isNew ? el('span', { class: 'chip accent', text: 'ประเด็นใหม่' }) : null,
+        DOCS[x.id] ? el('span', { class: 'chip wrap', title: 'มักต้องใช้เอกสารนอกแบบคำขอ', text: '📎 ' + DOCS[x.id] }) : null)),
+    scoreEl));
+  const det = el('details', { class: 'crit' }, el('summary', { text: 'สิ่งที่พิจารณา' }));
+  if (x.consider.length) det.append(el('ul', null, x.consider.map(c => el('li', { text: c }))));
+  if (x.full) det.append(el('p', null, el('strong', { text: 'ได้เต็มเมื่อ: ' }), x.full));
+  if (x.limit) det.append(el('p', null, el('strong', { text: 'ถูกจำกัดคะแนนเมื่อ: ' }), x.limit));
+  card.append(det);
+  const lvBox = el('div', { class: 'levels', role: 'radiogroup', 'aria-label': x.id + ' ' + x.name });
+  for (const l of levels) {
+    const on = cur === l.v;
+    const lab = el('label', { class: 'lv' + (on ? ' on' : '') },
+      el('input', { type: 'radio', name: 'r-' + x.id, id: 'r-' + x.id + '-' + l.v, value: String(l.v), checked: on, disabled: ro,
+        onchange: () => { S.mine.levels[x.id] = l.v; markLevels(x.id); renderAll(); queueSave(); } }),
+      el('span', { class: 'pts', text: fmt(l.v) }),
+      el('span', { class: 'txt' }, l.t, l.plus ? el('span', { class: 'tag', text: ' · ขั้น +1 ใช้เมื่อยังไม่ใช้ข้อ ๒.๒ง' }) : null,
+        l.added ? el('span', { class: 'tag', text: ' · ขั้นนี้แอปเพิ่มให้ เพราะเกณฑ์ข้อนี้ยังไม่มีขั้น 0' }) : null));
+    lvBox.append(lab);
+  }
+  card.append(lvBox);
+  if (notes && notes.length) card.append(el('div', { class: 'note-lines' }, notes.map((n, i) => el('div', { text: '** ' + n }))));
+
+  const pd = S.mine.pending[x.id] || {};
+  const pendBox = el('div', { class: 'pend-box', hidden: !pd.on },
+    el('label', null, 'เอกสาร/ข้อมูลที่ต้องตรวจ',
+      el('input', { type: 'text', id: 'pd-doc-' + x.id, value: pd.doc || DOCS[x.id] || '', disabled: ro,
+        oninput: e => { (S.mine.pending[x.id] ||= { on: true }).doc = e.target.value; queueSave(); } })),
+    el('label', null, 'อาจได้ถึง',
+      (() => { const s = el('select', { id: 'pd-max-' + x.id, disabled: ro,
+          onchange: e => { (S.mine.pending[x.id] ||= { on: true }).max = Number(e.target.value); renderAll(); queueSave(); } });
+        for (const l of levels) s.append(el('option', { value: String(l.v), text: fmt(l.v), selected: (typeof pd.max === 'number' ? pd.max : mx) === l.v }));
+        return s; })()));
+  const extra = el('div', { class: 'extra' },
+    el('div', { class: 'pend-row' },
+      el('label', { class: 'switch' },
+        el('input', { type: 'checkbox', id: 'pd-on-' + x.id, checked: !!pd.on, disabled: ro,
+          onchange: e => {
+            const o = (S.mine.pending[x.id] ||= {}); o.on = e.target.checked;
+            if (o.on && o.doc == null) o.doc = DOCS[x.id] || '';
+            if (o.on && typeof o.max !== 'number') o.max = mx;
+            pendBox.hidden = !o.on; renderAll(); queueSave(); } }),
+        '⏳ รอตรวจเอกสารนอกแบบคำขอ'),
+      el('button', { type: 'button', class: 'clear', disabled: ro, text: 'ล้างคะแนนข้อนี้',
+        onclick: () => { delete S.mine.levels[x.id]; markLevels(x.id); renderAll(); queueSave(); } })),
+    pendBox,
+    el('textarea', { id: 'note-' + x.id, rows: '2', placeholder: 'เหตุผล / อ้างเลขข้อในแบบคำขอ', disabled: ro,
+      oninput: e => { S.mine.notes[x.id] = e.target.value; queueSave(); } }));
+  extra.querySelector('textarea').value = S.mine.notes[x.id] || '';
+  card.append(extra);
+  return card;
+}
+function markLevels(id) {
+  const v = S.mine.levels[id];
+  document.querySelectorAll('#sub-' + CSS.escape(id) + ' .lv').forEach(lab => {
+    const inp = lab.querySelector('input'); const on = typeof v === 'number' && Number(inp.value) === v;
+    lab.classList.toggle('on', on); inp.checked = on;
+  });
+}
+
+/* ---------- tally ---------- */
+function renderAll() {
+  const p = proj(); const T = tallies(S.mine, p);
+  for (const x of activeSubs(p)) {
+    const s = scoreOf(S.mine, x, p), e = $('ss-' + x.id);
+    if (e) { e.textContent = ''; e.append(s == null ? '–' : fmt(s), el('span', { class: 'of', text: ' / ' + fmt(effMax(x, p)) })); }
+    const card = $('sub-' + x.id); if (card) card.classList.toggle('done', s != null);
+  }
+  for (const s of SIDES) {
+    const e = $('side-' + s.id); if (e) e.textContent = fmt(T.side[s.id] || 0) + ' / ' + s.max;
+    for (const t of s.topics) { const te = $('topic-' + t.id); if (te) te.textContent = fmt(T.topic[t.id] || 0) + ' / ' + t.max; }
+  }
+  renderTally(T, p);
+  $('bb-total').textContent = fmt(T.total);
+  $('bb-progress').textContent = 'ให้แล้ว ' + T.answered + '/' + T.count + ' ข้อ' + (T.pot > T.total ? ' · อาจได้ ' + fmt(T.pot) : '');
+}
+function observations(T, p, ev) {
+  const out = [];
+  if (T.answered < T.count) out.push(['', 'ยังให้คะแนนไม่ครบ ' + (T.count - T.answered) + ' ข้อ']);
+  const chk = (ok, text) => out.push([ok ? 'ok' : 'bad', text]);
+  chk(T.total >= 60, 'คะแนนรวม ' + fmt(T.total) + (T.total >= 60 ? ' ถึง' : ' ต่ำกว่า') + 'เกณฑ์ขั้นต่ำ 60');
+  for (const s of SIDES) { const v = T.side[s.id] || 0; chk(v >= s.max / 2, 'ด้าน ' + s.label + ' ได้ ' + fmt(v) + (v >= s.max / 2 ? ' ถึง' : ' ต่ำกว่า') + 'ครึ่งหนึ่ง (' + s.max / 2 + ')'); }
+  for (const id of ['1.1ก', '3.1ค']) { const x = SUB[id], v = scoreOf(ev, x, p) || 0, need = effMax(x, p) / 2; chk(v >= need, id + ' ได้ ' + fmt(v) + (v >= need ? ' ถึง' : ' ต่ำกว่า') + 'ครึ่งหนึ่งของคะแนนเต็ม'); }
+  return out;
+}
+function renderTally(T, p) {
+  const host = $('tally'); host.textContent = '';
+  const pending = activeSubs(p).filter(x => S.mine.pending[x.id] && S.mine.pending[x.id].on);
+  host.append(el('div', { class: 'card' },
+    el('div', { class: 'eyebrow', text: 'ม.' + p.kind + (p.market ? ' · ใช้ข้อ ๒.๒ง' : '') }),
+    el('div', { class: 'total' }, el('span', { class: 'big num', text: fmt(T.total) }), el('span', { class: 'of', text: '/ 100' })),
+    el('div', { class: 'small muted', text: 'ให้คะแนนแล้ว ' + T.answered + ' จาก ' + T.count + ' ข้อ' + (T.pot > T.total ? ' · อาจได้สูงสุด ' + fmt(T.pot) + ' เมื่อตรวจเอกสารครบ' : '') }),
+    SIDES.map(s => [
+      el('div', { class: 'trow sideline' }, el('span', { text: s.label + '. ' + s.name.replace(/\s*\(.*\)$/, '') }), el('span', { class: 'n', text: fmt(T.side[s.id] || 0) + '/' + s.max })),
+      s.topics.map(t => {
+        const v = T.topic[t.id] || 0, pv = T['pt' + t.id] || 0;
+        return el('div', { class: 'trow' }, el('span', { class: 'muted', text: t.label + ' ' + t.name.slice(0, 34) + (t.name.length > 34 ? '…' : '') }), el('span', { class: 'n', text: fmt(v) + '/' + t.max }),
+          el('div', { class: 'bar' }, el('b', { style: 'width:' + (100 * pv / t.max) + '%' }), el('i', { style: 'width:' + (100 * v / t.max) + '%' })));
+      })])));
+  host.append(el('div', { class: 'card' }, el('h3', { text: 'ข้อสังเกตเกณฑ์ขั้นต่ำ' }),
+    el('ul', { class: 'obs' }, observations(T, p, S.mine).map(([k, t]) => el('li', null, el('span', { class: 'chip ' + k, text: k === 'ok' ? 'ผ่าน' : k === 'bad' ? 'ต่ำกว่า' : 'ยังไม่ครบ' }), el('span', { text: t })))),
+    el('div', { class: 'small muted', text: 'รอบนี้ใช้เป็นข้อสังเกตเสนอคณะกรรมการ ยังไม่ใช่เงื่อนไขตัดสิทธิ์' })));
+  const pc = el('div', { class: 'card' }, el('h3', { text: '⏳ รอตรวจเอกสาร (' + pending.length + ')' }));
+  if (!pending.length) pc.append(el('div', { class: 'small muted', text: 'ยังไม่มี ติ๊ก "รอตรวจเอกสาร" ในข้อที่ต้องดูเอกสารนอกแบบคำขอ' }));
+  else pc.append(el('ul', { class: 'obs' }, pending.map(x => { const pd = S.mine.pending[x.id]; const now = scoreOf(S.mine, x, p) || 0, pot = potentialOf(S.mine, x, p);
+    return el('li', null, el('a', { href: '#score', onclick: ev => { ev.preventDefault(); $('sub-' + x.id).scrollIntoView({ behavior: 'smooth', block: 'center' }); }, text: x.id }),
+      el('span', { text: (pd.doc || 'ระบุเอกสาร') + ' · ' + fmt(now) + ' → ' + fmt(pot) })); })));
+  host.append(pc);
+  host.append(el('div', { class: 'card' }, el('h3', { text: 'ส่งออกคะแนนของคุณ' }),
+    el('div', { class: 'row-actions' },
+      el('button', { class: 'btn', type: 'button', id: 'btn-copy', onclick: copyTable, text: 'คัดลอกไปวางใน Excel' }),
+      el('button', { class: 'btn', type: 'button', id: 'btn-csv', onclick: saveCsv, text: 'ดาวน์โหลด CSV' })),
+    el('div', { class: 'small muted', id: 'copy-msg' })));
+}
+
+/* ---------- export ---------- */
+function rows() {
+  const p = proj();
+  const head = ['เกณฑ์ย่อย', 'ชื่อเกณฑ์', 'คะแนนเต็ม', 'คะแนนที่ได้', 'รอตรวจเอกสาร', 'อาจได้ถึง', 'เหตุผล'];
+  const out = [head];
+  for (const x of activeSubs(p)) {
+    const s = scoreOf(S.mine, x, p), pd = S.mine.pending[x.id];
+    out.push([x.id, x.name, fmt(effMax(x, p)), s == null ? '' : fmt(s), pd && pd.on ? (pd.doc || 'ใช่') : '', pd && pd.on ? fmt(potentialOf(S.mine, x, p)) : '', S.mine.notes[x.id] || '']);
+  }
+  const T = tallies(S.mine, p); out.push(['รวม', '', '100', fmt(T.total), '', fmt(T.pot), '']);
+  return out;
+}
+async function copyTable() {
+  const tsv = rows().map(r => r.map(c => String(c).replace(/[\t\n]+/g, ' ')).join('\t')).join('\n');
+  try { await navigator.clipboard.writeText(tsv); $('copy-msg').textContent = 'คัดลอกแล้ว วางในแผ่นงาน Excel ได้เลย'; }
+  catch (e) { $('copy-msg').textContent = 'คัดลอกอัตโนมัติไม่ได้ในหน้าต่างนี้ ลองใช้ปุ่มดาวน์โหลด CSV'; }
+}
+async function saveCsv() {
+  const csv = '﻿' + rows().map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const link = el('a', { href: url, download: 'คะแนน_ม.' + S.kind + '.csv' });
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  $('copy-msg').textContent = 'ดาวน์โหลดไฟล์แล้ว';
+}
+
+/* ---------- settings ---------- */
+function syncSettings() { $('kind').value = S.kind; $('market').checked = S.market; }
+$('kind').addEventListener('change', e => { S.kind = e.target.value; renderForm(); renderAll(); queueSave(); });
+$('market').addEventListener('change', e => { S.market = e.target.checked; renderForm(); renderAll(); queueSave(); });
+$('btn-reset').addEventListener('click', () => { $('reset-confirm').hidden = false; });
+$('reset-no').addEventListener('click', () => { $('reset-confirm').hidden = true; });
+$('reset-yes').addEventListener('click', () => {
+  S.mine = blankEval(); $('reset-confirm').hidden = true; renderForm(); renderAll(); queueSave();
+  window.scrollTo({ top: 0 });
+});
+
+/* ---------- boot ---------- */
+load(); syncSettings(); renderForm(); renderAll();
+})();
+</script>
+</body>
+</html>
